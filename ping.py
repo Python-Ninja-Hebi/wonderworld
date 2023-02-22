@@ -10,7 +10,7 @@ PADDLE_MAX_MOVE: float = HEIGHT - PADDLE_HEIGHT
 PADDLE_MIN_MOVE: float = 0
 
 BALL_WIDTH: float = 10.0
-BALL_VELOCITY: Vector3 = Vector3(160.0, 160.0, 0.0)
+BALL_VELOCITY: Vector2 = Vector2(160.0, 160.0)
 
 LINE_WIDTH: float = 2.0;
 
@@ -34,7 +34,7 @@ class Paddle(Component):
 
 @dataclass
 class Velocity(Component):
-    value: Vector3
+    value: Vector2
 
 
 @dataclass
@@ -60,7 +60,7 @@ def setup():
                                           size=Vector2(BALL_WIDTH, BALL_WIDTH)))
 
     commands.spawn(SpriteBundle(sprite=Sprite(image=ball_handle),
-                                transform=Transform(translation=Vector3(100, 100, 0)),
+                                transform=Transform(translation=Vector2(100, 100)),
                                 visibility=Visibility(True))) \
         .insert(Velocity(BALL_VELOCITY.copy())) \
         .insert(Ball())
@@ -90,30 +90,24 @@ def setup():
         .insert(Paddle(up_key=K_UP, down_key=K_DOWN))
 
     # score
-    # commands.spawn(Text2dBundle {
-    #    text: Text::from_section(
-    #        "0",
-    #        TextStyle {
-    #            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-    #            font_size: 64.0,
-    #            color: Color::WHITE,
-    #        }),
-    #    transform: Transform::from_xyz(-WIDTH/4.0,200.,1.),
-    #    ..Default::default()
-    # })
-    #    .insert(LeftText{});
-    # commands.spawn(Text2dBundle {
-    #    text: Text::from_section(
-    #        "0",
-    #        TextStyle {
-    #            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-    #            font_size: 64.0,
-    #            color: Color::WHITE,
-    #        }),
-    #    transform: Transform::from_xyz(WIDTH/4.0,200.,1.),
-    #    ..Default::default()
-    # })
-    #    .insert(RightText{});
+    asset_server = get_resource(AssetServer)
+    font_size = 64
+    commands.spawn(Text2dBundle(
+        text =  Text(text="0",
+                font =  asset_server.load("fonts/FiraSans-Bold.ttf",AssetType.FONT,size=font_size),
+                font_size = font_size,
+                color = Color('white')
+            ),
+        transform = Transform(translation=Vector2(WIDTH/4.0,200.)
+    ))).insert(LeftText())
+    commands.spawn(Text2dBundle(
+        text=Text(text="0",
+                  font=asset_server.load("fonts/FiraSans-Bold.ttf", AssetType.FONT, size=font_size),
+                  font_size=font_size,
+                  color=Color('white')
+                  ),
+        transform=Transform(translation=Vector2(3 *WIDTH / 4.0, 200.)
+                            ))).insert(RightText())
 
 
 def input():
@@ -147,36 +141,26 @@ def collides():
                 velocity.value.x = - velocity.value.x
 
 
-#
-# fn score(
-#    mut score:ResMut<Score>,
-#    mut query: Query<&mut Transform,With<Ball>>,
-# )
-# {
-#    for mut transform in query.iter_mut() {
-#        if transform.translation.x < -WIDTH / 2.0 {
-#            score.right += 1;
-#            transform.translation = Vec3::ZERO;
-#        }
-#        if transform.translation.x > WIDTH / 2.0 {
-#            score.left += 1;
-#            transform.translation = Vec3::ZERO;
-#        }
-#    }
-# }
+def score():
 
-# fn show_score(
-#    score:Res<Score>,
-#    mut left_query: Query<&mut Text,(With<LeftText>,Without<RightText>)>,
-#    mut right_query: Query<&mut Text,(With<RightText>,Without<LeftText>)>,
-# ){
-#    for mut text in left_query.iter_mut() {
-#        text.sections[0].value = format!("{}", score.left);
-#    }
-#   for mut text in right_query.iter_mut() {
-#        text.sections[0].value = format!("{}", score.right);
-#    }
-# }
+    score = get_resource(Score)
+
+    for transform, in Query(Transform,With(Ball)):
+        if transform.translation.x < 0:
+            score.right += 1
+            transform.translation = Vector2(WIDTH/2,HEIGHT/2)
+        elif transform.translation.x > WIDTH:
+            score.left += 1
+            transform.translation = Vector2(WIDTH/2,HEIGHT/2)
+
+def show_score():
+    score = get_resource(Score)
+
+    for text, in Query(Text,With(LeftText)):
+        text.text =  f"{score.left}"
+
+    for text, in Query(Text,With(RightText)):
+        text.text = f"{score.right}"
 
 if __name__ == "__main__":
     App() \
@@ -192,6 +176,7 @@ if __name__ == "__main__":
         .add_system(input) \
         .add_system(move_ball) \
         .add_system(collides) \
+        .add_system(score) \
+        .add_system(show_score) \
         .run()
-    #  .add_system(score) \
-    #  .add_system(show_score)
+

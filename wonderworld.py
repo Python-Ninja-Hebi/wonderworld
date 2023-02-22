@@ -128,10 +128,18 @@ def get_commands() -> Commands:
 
 # ---- Assets ----
 
+class AssetType(str, Enum):
+    IMAGE = 'image'
+    FONT = 'font'
+
 class AssetServer:
-    def load(self, file_name: str) -> int:
-        image = pygame.image.load(f"assets/{file_name}")
-        return get_resource(Assets).add(image)
+    def load(self, file_name: str, asset_type:AssetType=AssetType.IMAGE,size:int=8) -> int:
+        asset = None
+        if asset_type == AssetType.IMAGE:
+            asset = pygame.image.load(f"assets/{file_name}")
+        elif asset_type == AssetType.FONT:
+            asset = pygame.font.Font(f"assets/{file_name}",size)
+        return get_resource(Assets).add(asset)
 
 
 @dataclass
@@ -190,6 +198,41 @@ class Transform(Component):
     rotation: float = 0
     scale: Vector2 = Vector2(0,0)
 
+@dataclass
+class Text2dBundle(Bundle):
+    text: Text
+    transform: Transform
+
+@dataclass
+class Text(Component):
+    text: str = ""
+    font: int = -1
+    font_size: float = 8
+    color: Color = None
+    _text: str = field(init=False, repr=False, default='<empty>')
+    _image:surface = None
+
+    @property
+    def text(self) -> str:
+        return self._text
+
+    @text.setter
+    def text(self, value: str) -> None:
+        if type(value) is property:
+            # initial value not specified, use default
+            value = Text._text
+        if self._text != value:
+            self._update_image(value)
+        self._text = value
+
+    def _update_image(self, value:str)->None:
+        if self.font > -1:
+            self._image = get_resource(Assets).get(self.font).render(value,
+                                                                     True,
+                                                                     self.color,
+                                                                     None)
+
+
 # ---- Standard Resources ----
 @dataclass
 class ClearColor(Resource):
@@ -238,6 +281,14 @@ def render_core():
                          (transform.translation.x+camera_transform.translation.x,
                           transform.translation.y+camera_transform.translation.y))
 
+    for transform, text in Query((Transform, Text)):
+        if text._image is None:
+            text._update_image(text._text)
+        _app.screen.blit(text._image,
+                         (transform.translation.x + camera_transform.translation.x,
+                          transform.translation.y + camera_transform.translation.y))
+
+
 # ---- Standard Funtions ----
 def collide_aabb(position_1:Vector2,size_1:Vector2, position_2:Vector2, size_2:Vector2)->bool:
     return Rect(position_1.x, position_1.y, size_1.x, size_1.y).colliderect(Rect(position_2.x,
@@ -247,8 +298,11 @@ def collide_aabb(position_1:Vector2,size_1:Vector2, position_2:Vector2, size_2:V
 # ---- Application ----
 
 class Stage(str, Enum):
-    RENDER = 'render'
+    PRE_UPDATE = 'pre-update'
+    POST_UPDATE = 'post-update'
+    LAST = 'last'
     UPDATE = 'update'
+    RENDER = 'render'
 
 _app: App = None
 
