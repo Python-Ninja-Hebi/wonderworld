@@ -2,7 +2,6 @@ from wonderworld import *
 
 PADDLE_VELOCITY: float = 180.0
 
-@dataclass
 class Paddle(Component):
     pass
 
@@ -28,7 +27,7 @@ def setup():
                                 transform=Transform(translation=Vector2(100, 100),
                                                     rotation=0,
                                                     scale=Vector2(0, 0)),
-                                visibility=Visibility(True))) \
+                                visibility=Visibility(visible=True))) \
         .insert(Paddle())
 
 
@@ -46,7 +45,7 @@ def input():
 
 
 if __name__ == "__main__":
-    App().insert_resource(ClearColor(pygame.Color('black'))) \
+    App().insert_resource(ClearColor(color=pygame.Color('black'))) \
         .add_plugins(DefaultPlugins()) \
         .add_startup_system(setup) \
         .add_system(input) \

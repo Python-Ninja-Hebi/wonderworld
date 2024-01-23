@@ -15,34 +15,28 @@ BALL_VELOCITY: Vector2 = Vector2(160.0, 160.0)
 LINE_WIDTH: float = 2.0;
 
 
-@dataclass
 class Score(Resource):
     left: int
     right: int
 
 
-@dataclass
 class Ball(Component):
     pass
 
 
-@dataclass
 class Paddle(Component):
     up_key: int
     down_key: int
 
 
-@dataclass
 class Velocity(Component):
     value: Vector2
 
 
-@dataclass
 class LeftText(Component):
     pass
 
 
-@dataclass
 class RightText(Component):
     pass
 
@@ -61,8 +55,8 @@ def setup():
 
     commands.spawn(SpriteBundle(sprite=Sprite(image=ball_handle),
                                 transform=Transform(translation=Vector2(100, 100)),
-                                visibility=Visibility(True))) \
-        .insert(Velocity(BALL_VELOCITY.copy())) \
+                                visibility=Visibility(visible=True))) \
+        .insert(Velocity(value=BALL_VELOCITY.copy())) \
         .insert(Ball())
 
     # line
@@ -70,14 +64,14 @@ def setup():
                                           size=Vector2(LINE_WIDTH, HEIGHT)))
     commands.spawn(SpriteBundle(sprite=Sprite(image=line_handle),
                                 transform=Transform(translation=Vector2(WIDTH / 2, 0)),
-                                visibility=Visibility(True)))
+                                visibility=Visibility(visible=True)))
     # paddle_left
     left_handle = assets.add(create_image(color=pygame.Color('white'),
                                           size=Vector2(PADDLE_WIDTH, PADDLE_HEIGHT)))
     commands.spawn(SpriteBundle(sprite=Sprite(image=left_handle),
                                 transform=Transform(translation=Vector2(0.0,
                                                                         HEIGHT / 2.0 - PADDLE_HEIGHT / 2)),
-                                visibility=Visibility(True))) \
+                                visibility=Visibility(visible=True))) \
         .insert(Paddle(up_key=K_w, down_key=K_a))
 
     # paddle_right
@@ -86,7 +80,7 @@ def setup():
     commands.spawn(SpriteBundle(sprite=Sprite(image=right_handle),
                                 transform=Transform(translation=Vector2(WIDTH - PADDLE_WIDTH,
                                                                         HEIGHT / 2.0 - PADDLE_HEIGHT / 2)),
-                                visibility=Visibility(True))) \
+                                visibility=Visibility(visible=True))) \
         .insert(Paddle(up_key=K_UP, down_key=K_DOWN))
 
     # score
@@ -164,7 +158,7 @@ def show_score():
 
 if __name__ == "__main__":
     App() \
-        .insert_resource(ClearColor(pygame.Color('black'))) \
+        .insert_resource(ClearColor(color=pygame.Color('black'))) \
         .insert_resource(WindowDescriptor(
         title="wonderworld ping",
         width=WIDTH,
